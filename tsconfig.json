@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "NodeNext",
-    "moduleResolution": "nodeNext",
+    "target": "es2017",
+    "module": "esnext",
+    "moduleResolution": "Node",
     "noImplicitAny": false,
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
-    "declaration": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
   },
   "include": [
     "src/**/*.ts"

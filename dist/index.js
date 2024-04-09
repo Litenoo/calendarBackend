@@ -1,23 +1,30 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-require('dotenv').config();
-const express_1 = __importDefault(require("express"));
-const express_session_1 = __importDefault(require("express-session"));
-const cors_1 = __importDefault(require("cors"));
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-const number = 2 * 2 + 2;
-app.use((0, express_session_1.default)({
+import 'dotenv/config';
+import express from "express";
+import session from "express-session";
+import cors from "cors";
+import mariaDB from "mariadb";
+const app = express();
+app.use(cors());
+app.use(session({
     secret: "password",
     saveUninitialized: true,
     resave: false,
 }));
+const pool = mariaDB.createPool({
+    connectionLimit: 10,
+    host: "127.0.0.1",
+    port: 3306,
+    user: 'root',
+    password: 'Pikachu531',
+    database: 'calendarApp',
+});
+async function getUser() {
+    const user = await pool.query('SELECT email, password, username FROM users LIMIT 1');
+    return user;
+}
+const users = await getUser();
+console.log(users);
 app.get('/', (req, res) => {
-    console.log("request handled !");
-    res.json({ data: number });
     res.end();
 });
 app.listen(3000, () => {

@@ -1,11 +1,12 @@
-require('dotenv').config();
+import 'dotenv/config';
 import express from "express";
 import session from "express-session";
 import cors from "cors";
+import bcrypt from "bcrypt";
+import mariaDB from "mariadb";
 
 const app = express();
 app.use(cors());
-const number = 2 * 2 + 2;
 
 app.use(session({
   secret: "password", // change to env file later
@@ -13,12 +14,28 @@ app.use(session({
   resave: false,
 }));
 
+const pool = mariaDB.createPool({
+  connectionLimit:10,
+  host: "127.0.0.1",
+  port: 3306,
+  user: 'root',
+  password: 'Pikachu531',
+  database: 'calendarApp',
+})
+
+async function getUser(){
+  const user:Object = await pool.query('SELECT email, password, username FROM users LIMIT 1');
+  return user;
+}
+
+const users:Object = await getUser();
+console.log(users);
+
+
 app.get('/', (req, res) => {
-  console.log("request handled !");
-  res.json({ data : number });
   res.end();
 });
 
-app.listen(3000, () => {
+app.listen(3000, () : void => {
   console.log("server is listening on port : 3000");
-}); 
+});
