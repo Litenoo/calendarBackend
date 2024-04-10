@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es6",
     "module": "esnext",
     "moduleResolution": "Node",
     "noImplicitAny": false,
@@ -9,8 +9,10 @@
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*.ts"
