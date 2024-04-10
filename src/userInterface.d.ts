@@ -4,6 +4,11 @@ export interface User {
     username:string;
 }
 export interface registerResponse{
-    registerSucces:boolean,
+    registerSuccess:boolean,
     error?:any
+}
+export interface loginResponse{
+    error?:string,
+    username?:string,
+    email?:string
 }
