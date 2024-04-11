@@ -7,7 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import 'dotenv/config';
 import bcrypt from "bcrypt";
+import jwt from 'jsonwebtoken';
 export function getUserByEmail(email, pool) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
@@ -29,25 +31,22 @@ export function createUser(user, pool) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
-            const doesUserExist = yield getUserByEmail(user.email, pool);
-            if (doesUserExist !== null) {
+            const userExist = yield getUserByEmail(user.email, pool);
+            if (userExist !== null) {
                 conn = yield pool.getConnection();
                 const hash = yield bcrypt.hash(user.password, 10);
                 yield conn.query('INSERT INTO users (email, password, username) VALUES (?,?,?)', [user.email, hash, user.username]);
-                if (conn)
-                    conn.end();
                 return { registerSuccess: true };
             }
             else {
-                if (conn)
-                    conn.end();
                 return { registerSuccess: false, error: "There is already user with that email." };
             }
         }
         catch (err) {
-            if (conn)
-                conn.end();
             return { registerSuccess: false, error: err };
+        }
+        finally {
+            conn.end();
         }
     });
 }
@@ -58,7 +57,11 @@ export function login(loginData, pool) {
             if (user) {
                 const result = yield bcrypt.compare(loginData.password, user.password);
                 if (result) {
-                    return { email: user.email, username: user.username };
+                    const token = jwt.sign({ email: user.email, username: user.username }, process.env.JWT_SECRET);
+                    return { jwt: token };
+                }
+                else {
+                    return { error: 'Wrong password.' };
                 }
             }
             return { error: 'There is no user with given email.' };
