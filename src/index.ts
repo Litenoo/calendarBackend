@@ -5,10 +5,13 @@ import mariaDB from "mariadb";
 import cors from "cors";
 
 import {createUser, login} from './accountFunctions.js';
-import {RegisterResponse, JwtPayload} from './userInterfaces'
+import {RegisterResponse, JwtPayload} from './userInterfaces';
 
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cors());
 app.use(session({
   secret: process.env.SESSION_SECRET as string,
@@ -29,13 +32,22 @@ app.get('/', (req, res) => {
   res.end();
 });
 
-app.post('/register', (req, res) => {
-  const operationStatus: Promise<RegisterResponse> = createUser(req.body.registerData, pool);
+app.post('/register', async (req, res) => {
+  try{
+  const operationStatus : RegisterResponse= await createUser(req.body, pool);
   res.send(operationStatus);
+  }catch(err){
+    console.log(err);
+    res.status(500).send('Please retry or contact with server administrator');
+  }
 });
-app.post('/login', (req, res) => {
-  const operationStatus: Promise<JwtPayload> = login(req.body.loginData, pool);
+app.post('/login', async (req, res) => {
+  const operationStatus: JwtPayload = await login(req.body, pool);
+  if(operationStatus.jwt){
+
+  }else{
   res.send(operationStatus);
+  }
 });
 
 app.listen(process.env.PORT, (): void => {

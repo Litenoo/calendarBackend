@@ -35,7 +35,7 @@ export async function createUser(user: User, pool): Promise<RegisterResponse> {
   } catch (err) {
     return {registerSuccess: false, error: err};
   } finally {
-    conn.end();
+    if(conn) conn.end();
   }
 }
 

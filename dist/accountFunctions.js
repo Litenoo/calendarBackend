@@ -46,7 +46,8 @@ export function createUser(user, pool) {
             return { registerSuccess: false, error: err };
         }
         finally {
-            conn.end();
+            if (conn)
+                conn.end();
         }
     });
 }
