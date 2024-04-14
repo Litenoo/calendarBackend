@@ -1,8 +1,7 @@
 import 'dotenv/config';
 import bcrypt from "bcrypt";
-import jwt from 'jsonwebtoken';
 
-import {RegisterResponse, JwtPayload, User, DBuserOutput} from "./userInterfaces";
+import {RegisterResponse, SessionResponse, User, DBuserOutput} from "./userInterfaces";
 
 export async function getUserByEmail(email, pool): Promise<DBuserOutput | null> {
   let conn;
@@ -39,14 +38,14 @@ export async function createUser(user: User, pool): Promise<RegisterResponse> {
   }
 }
 
-export async function login(loginData, pool): Promise<JwtPayload> {
+export async function login(loginData, pool): Promise<SessionResponse> {
+  console.log('loginData : ', loginData);
   try {
     let user :DBuserOutput|null = await getUserByEmail(loginData.email, pool);
     if (user) {
       const result = await bcrypt.compare(loginData.password, user.password);
       if (result) {
-        const token = jwt.sign({email: user.email, username: user.username}, process.env.JWT_SECRET);
-        return {jwt: token};
+        return {email: user.email, username: user.username}
       } else {
         return {error: 'Wrong password.'};
       }

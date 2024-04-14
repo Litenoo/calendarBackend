@@ -7,8 +7,9 @@ export interface RegisterResponse{
     registerSuccess:boolean,
     error?:any
 }
-export interface JwtPayload{
-    jwt?:string,
+export interface SessionResponse{
+    email?:string,
+    username?:string,
     error?:string,
 }
 export interface DBuserOutput {
