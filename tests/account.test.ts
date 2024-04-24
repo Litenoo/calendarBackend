@@ -47,26 +47,29 @@ test('Login system - User validation and JWT token are working properly', async 
     password: 't',
     username: 't',
   }
+
   //Case 1 - Wrong email
   let user: SessionResponse = await login(notValidUserData, pool);
 
   expect(user.error).toEqual('There is no user with given email.');
   expect(user.email).toEqual(undefined);
-  expect(user.username).toEqual(undefined);
+  expect(user.id).toBeFalsy();
 
   //Case 2 - Wrong password
   user = await login(notValidUserData2, pool);
 
   expect(user.error).toEqual('Wrong password.');
   expect(user.email).toEqual(undefined);
-  expect(user.username).toEqual(undefined);
+  expect(user.id).toBeFalsy();
 
   //Case 3 - Correct login data
   user = await login(validLoginData, pool);
 
+  console.log('USER : ', user)
+
   expect(user.error).toEqual(undefined);
   expect(user.email).toEqual('t@t');
-  expect(user.username).toEqual('t');
+  expect(user.id).toBeTruthy();
 
   await killConnectionDB();
 });

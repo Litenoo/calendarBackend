@@ -14,7 +14,7 @@ export function getUserByEmail(email, pool) {
         let conn;
         try {
             conn = yield pool.getConnection();
-            const user = yield conn.query('SELECT email, password, username FROM users WHERE email = ? LIMIT 1', [email]);
+            const user = yield conn.query('SELECT email, password, username, id FROM users WHERE email = ? LIMIT 1', [email]);
             return user[0];
         }
         catch (err) {
@@ -52,13 +52,12 @@ export function createUser(user, pool) {
 }
 export function login(loginData, pool) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log('loginData : ', loginData);
         try {
             let user = yield getUserByEmail(loginData.email, pool);
             if (user) {
                 const result = yield bcrypt.compare(loginData.password, user.password);
                 if (result) {
-                    return { email: user.email, username: user.username };
+                    return { id: user.id, email: user.email };
                 }
                 else {
                     return { error: 'Wrong password.' };
@@ -69,6 +68,24 @@ export function login(loginData, pool) {
         catch (err) {
             console.log(err);
             return { error: 'There was an error occurred. Please contact with server administrator or retry.' };
+        }
+    });
+}
+export function getUserById(id, pool) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let conn;
+        try {
+            conn = yield pool.getConnection();
+            const user = yield conn.query('SELECT email, username FROM users WHERE id = ? LIMIT 1', [id]);
+            console.log('user 64 :', user, 'id :', id);
+            return { user: user[0] };
+        }
+        catch (err) {
+            return { user: null };
+        }
+        finally {
+            if (conn)
+                conn.end();
         }
     });
 }

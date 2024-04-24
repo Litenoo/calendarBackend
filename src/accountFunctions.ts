@@ -7,7 +7,8 @@ export async function getUserByEmail(email, pool): Promise<DBuserOutput | null> 
   let conn;
   try {
     conn = await pool.getConnection();
-    const user = await conn.query('SELECT email, password, username FROM users WHERE email = ? LIMIT 1', [email]);
+    const user = await conn.query('SELECT email, password, username, id FROM users WHERE email = ? LIMIT 1', [email]);
+    // console.log('user {11}', user);
     return user[0];
   } catch (err) {
     return null;
@@ -39,13 +40,12 @@ export async function createUser(user: User, pool): Promise<RegisterResponse> {
 }
 
 export async function login(loginData, pool): Promise<SessionResponse> {
-  console.log('loginData : ', loginData);
   try {
     let user :DBuserOutput|null = await getUserByEmail(loginData.email, pool);
     if (user) {
       const result = await bcrypt.compare(loginData.password, user.password);
       if (result) {
-        return {email: user.email, username: user.username}
+        return {id: user.id, email:user.email};
       } else {
         return {error: 'Wrong password.'};
       }
@@ -54,5 +54,19 @@ export async function login(loginData, pool): Promise<SessionResponse> {
   } catch (err) {
     console.log(err);
     return {error: 'There was an error occurred. Please contact with server administrator or retry.'};
+  }
+}
+
+export async function getUserById(id, pool): Promise<any> {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const user = await conn.query('SELECT email, username FROM users WHERE id = ? LIMIT 1', [id]);
+    console.log('user 64 :', user, 'id :', id);
+    return {user : user[0]};
+  } catch (err) {
+    return {user: null};
+  } finally {
+    if (conn) conn.end();
   }
 }

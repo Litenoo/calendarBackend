@@ -8,12 +8,14 @@ export interface RegisterResponse{
     error?:any
 }
 export interface SessionResponse{
-    email?:string,
-    username?:string,
-    error?:string,
+    id?:number;
+    username?:string;
+    email?:string;
+    error?:string;
 }
 export interface DBuserOutput {
     email:string;
     password:string;
     username:string;
+    id:number;
 }

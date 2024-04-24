@@ -13,7 +13,7 @@ import session from "express-session";
 import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
-import { createUser, login } from './accountFunctions.js';
+import { createUser, login, getUserById } from './accountFunctions.js';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -52,12 +52,10 @@ app.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 }));
 app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('/login handled,  req.body : ', req.body);
     res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
     const userData = yield login(req.body, pool);
     try {
-        console.log('DATA : ', userData.email, userData.username);
-        if (userData.email && userData.username) {
+        if (userData.id) {
             res.cookie('userId', userData, { maxAge: 90000, httpOnly: true });
             res.status(200).send({ message: 'Login process went successful' });
         }
@@ -71,6 +69,13 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     finally {
         res.end();
     }
+}));
+app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('/userData cookie : ', req.cookies.userId);
+    const userData = yield getUserById(req.cookies.userId.id, pool);
+    console.log('userData (87): ', userData);
+    res.json(userData.user);
+    res.end();
 }));
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on PORT : ${process.env.PORT}`);

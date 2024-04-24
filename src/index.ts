@@ -4,8 +4,9 @@ import session from "express-session";
 import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 
-import {createUser, login} from './accountFunctions.js';
+import {createUser, login, getUserById} from './accountFunctions.js';
 import {RegisterResponse, SessionResponse} from './userInterfaces';
 
 
@@ -25,6 +26,7 @@ app.use(session({
   resave: false,
 }));
 
+
 const pool = mariaDB.createPool({
   host: "127.0.0.1",
   port: 3306,
@@ -41,32 +43,51 @@ app.get('/', (req, res) => {
   res.end();
 });
 
+// app.get('/checkCookie', (req, res, next)=>{
+//   if(req.cookies.userId){
+//     res.status(401).send("Invalid or missing cookie");
+//   }
+//   const hash = crypto.createHash('sha256').update(req.cookies.userId + process.env.COOKIE_SECRET).digest('hex');
+//   if(hash !== req.cookies.userId){
+//     res.status(401).send("Invalid cookie")
+//   }
+//   next();
+// })
+
 app.post('/register', async (req, res) => {
   try {
     const operationStatus: RegisterResponse = await createUser(req.body, pool);
     res.send(operationStatus);
-  } catch (err) {``
+  } catch (err) {
+    ``
     console.log(err);
     res.status(500).send('Please retry or contact with server administrator');
   }
 });
+
 app.post('/login', async (req, res) => {
-  console.log('/login handled,  req.body : ', req.body);
   res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
   const userData: SessionResponse = await login(req.body, pool);
   try {
-    console.log('DATA : ', userData.email , userData.username);
-    if (userData.email && userData.username) {
-      res.cookie('userId', userData, {maxAge: 90000, httpOnly:true});
+    if (userData.id) {
+      res.cookie('userId', userData, {maxAge: 90000, httpOnly: true});
       res.status(200).send({message: 'Login process went successful'});
     } else {
       res.status(401).json({message: userData.error});
     }
   } catch (err) {
     console.log(err);
-  }finally{
+  } finally {
     res.end();
   }
+});
+
+app.post('/userData', async (req, res) => {
+  console.log('/userData cookie : ', req.cookies.userId);
+  const userData = await getUserById(req.cookies.userId.id, pool);
+  console.log('userData (87): ', userData);
+  res.json(userData.user);
+  res.end();
 });
 
 app.listen(process.env.PORT, (): void => {
