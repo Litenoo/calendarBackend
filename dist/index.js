@@ -14,6 +14,7 @@ import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
 import { createUser, login, getUserById } from './accountFunctions.js';
+import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,19 +36,12 @@ const pool = mariaDB.createPool({
     database: 'calendarApp',
     connectionLimit: 10,
 });
-app.get('/', (req, res) => {
-    console.log('/ handled');
-    res.send('hello !');
-    res.end();
-});
 app.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const operationStatus = yield createUser(req.body, pool);
         res.send(operationStatus);
     }
     catch (err) {
-        ``;
-        console.log(err);
         res.status(500).send('Please retry or contact with server administrator');
     }
 }));
@@ -70,12 +64,44 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         res.end();
     }
 }));
+const sentFrom = new Sender("gyfonk482@gmail.com", "noreply");
 app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('/userData cookie : ', req.cookies.userId);
-    const userData = yield getUserById(req.cookies.userId.id, pool);
-    console.log('userData (87): ', userData);
-    res.json(userData.user);
-    res.end();
+    try {
+        const userData = yield getUserById(req.cookies.userId.id, pool);
+        res.json(userData.user);
+    }
+    catch (err) {
+        res.status(403);
+        res.send('No cookie');
+    }
+    finally {
+        res.end();
+    }
+}));
+const mailerSend = new MailerSend({
+    apiKey: process.env.MAIL_API_KEY,
+});
+app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const usersEmail = JSON.stringify(req.body.email);
+        const sentFrom = new Sender("MS_8EhF3E@trial-ynrw7gyq7oo42k8e.mlsender.net", "noreply");
+        const recipients = [
+            new Recipient("pokelukaspl@gmail.com", "Client")
+        ];
+        const emailParams = new EmailParams()
+            .setFrom(sentFrom)
+            .setTo(recipients)
+            .setSubject("This is a Subject")
+            .setHtml("<strong>This is the HTML content</strong>")
+            .setText("This is the text content");
+        mailerSend.email
+            .send(emailParams)
+            .then((response) => console.log(response))
+            .catch((error) => console.log(error));
+    }
+    catch (err) {
+        console.log(err);
+    }
 }));
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on PORT : ${process.env.PORT}`);

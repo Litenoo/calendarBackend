@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import mariaDB from 'mariadb';
-import jwt from 'jsonwebtoken';
 import {createUser, login, getUserByEmail} from '../src/accountFunctions';
 import {SessionResponse} from "../src/userInterfaces";
 
@@ -12,6 +11,7 @@ const pool = mariaDB.createPool({ //WARNING connected database gets empty every 
   database: 'testCalendarApp',
   connectionLimit: 10,
 });
+
 
 async function killConnectionDB(): Promise<void> {
   await pool.query("DELETE FROM users");
@@ -64,8 +64,6 @@ test('Login system - User validation and JWT token are working properly', async 
 
   //Case 3 - Correct login data
   user = await login(validLoginData, pool);
-
-  console.log('USER : ', user)
 
   expect(user.error).toEqual(undefined);
   expect(user.email).toEqual('t@t');

@@ -77,7 +77,6 @@ export function getUserById(id, pool) {
         try {
             conn = yield pool.getConnection();
             const user = yield conn.query('SELECT email, username FROM users WHERE id = ? LIMIT 1', [id]);
-            console.log('user 64 :', user, 'id :', id);
             return { user: user[0] };
         }
         catch (err) {

@@ -8,7 +8,6 @@ export async function getUserByEmail(email, pool): Promise<DBuserOutput | null> 
   try {
     conn = await pool.getConnection();
     const user = await conn.query('SELECT email, password, username, id FROM users WHERE email = ? LIMIT 1', [email]);
-    // console.log('user {11}', user);
     return user[0];
   } catch (err) {
     return null;
@@ -62,7 +61,6 @@ export async function getUserById(id, pool): Promise<any> {
   try {
     conn = await pool.getConnection();
     const user = await conn.query('SELECT email, username FROM users WHERE id = ? LIMIT 1', [id]);
-    console.log('user 64 :', user, 'id :', id);
     return {user : user[0]};
   } catch (err) {
     return {user: null};
