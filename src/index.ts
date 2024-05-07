@@ -86,21 +86,21 @@ app.post('/changePassword', async (req, res)=>{ //dev move to passwordRecovery.t
       headers:{
         'Content-Type' : 'application/json',
         'X-Requested-With':'XMLHttpRequest',
-        'Authorization' : 'Bearer mlsn.af2fb9be9fb0adcddc76eddbe1949b689777c3754d4c7948da5996af0191b9cc',
+        'Authorization' : 'Bearer token',
       },
       body: JSON.stringify({
         'from': {
-          'email': 'MS_8EhF3E@trial-ynrw7gyq7oo42k8e.mlsender.net'
+          'email': 'mailForSender'
         },
         'to': [
           {
-            'email': 'pokelukaspl@gmail.com'
+            'email': 'mail@gmail.com'
           }
         ],
         'subject': 'Email Recovery for your calendarApp account',
         'personalization': [
           {
-            'email': 'pokelukaspl@gmail.com', //replace with users email
+            'email': 'mail@gmail.com', //replace with users email
             'data': {
               'name': 'support noreply',
               'account_name': 'noreply',
@@ -109,7 +109,7 @@ app.post('/changePassword', async (req, res)=>{ //dev move to passwordRecovery.t
             }
           }
         ],
-        'template_id': 'k68zxl2z019lj905',
+        'template_id': 'templatetoken',
       })
     })
   }catch(err){
