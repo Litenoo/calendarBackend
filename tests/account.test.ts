@@ -31,7 +31,7 @@ test('Registration system - Creating new account works properly', async () => {
 
 });
 
-test('Login system - User validation and JWT token are working properly', async () => {
+test('Login system - User validation and sessions are working properly', async () => {
   const notValidUserData = {
     email: 'f@f',
     password: 't',

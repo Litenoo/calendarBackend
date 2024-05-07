@@ -14,7 +14,7 @@ import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
 import { createUser, login, getUserById } from './accountFunctions.js';
-import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
+import { createRecoveryToken, getRecoveryToken } from './passwordRecovery.js';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -64,7 +64,6 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         res.end();
     }
 }));
-const sentFrom = new Sender("gyfonk482@gmail.com", "noreply");
 app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const userData = yield getUserById(req.cookies.userId.id, pool);
@@ -78,26 +77,44 @@ app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.end();
     }
 }));
-const mailerSend = new MailerSend({
-    apiKey: process.env.MAIL_API_KEY,
-});
 app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const usersEmail = JSON.stringify(req.body.email);
-        const sentFrom = new Sender("MS_8EhF3E@trial-ynrw7gyq7oo42k8e.mlsender.net", "noreply");
-        const recipients = [
-            new Recipient("pokelukaspl@gmail.com", "Client")
-        ];
-        const emailParams = new EmailParams()
-            .setFrom(sentFrom)
-            .setTo(recipients)
-            .setSubject("This is a Subject")
-            .setHtml("<strong>This is the HTML content</strong>")
-            .setText("This is the text content");
-        mailerSend.email
-            .send(emailParams)
-            .then((response) => console.log(response))
-            .catch((error) => console.log(error));
+        yield createRecoveryToken(usersEmail, pool);
+        const recoveryToken = yield getRecoveryToken(usersEmail, pool);
+        const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token;
+        console.log('recoverylink : ', recoveryLink);
+        yield fetch(' https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Authorization': 'Bearer mlsn.af2fb9be9fb0adcddc76eddbe1949b689777c3754d4c7948da5996af0191b9cc',
+            },
+            body: JSON.stringify({
+                'from': {
+                    'email': 'MS_8EhF3E@trial-ynrw7gyq7oo42k8e.mlsender.net'
+                },
+                'to': [
+                    {
+                        'email': 'pokelukaspl@gmail.com'
+                    }
+                ],
+                'subject': 'Email Recovery for your calendarApp account',
+                'personalization': [
+                    {
+                        'email': 'pokelukaspl@gmail.com',
+                        'data': {
+                            'name': 'support noreply',
+                            'account_name': 'noreply',
+                            'support_email': 'supportCalendarApp@example.com',
+                            'link': `${recoveryLink}`,
+                        }
+                    }
+                ],
+                'template_id': 'k68zxl2z019lj905',
+            })
+        });
     }
     catch (err) {
         console.log(err);

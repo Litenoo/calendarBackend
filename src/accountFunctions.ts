@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 
 import {RegisterResponse, SessionResponse, User, DBuserOutput} from "./userInterfaces";
 
-export async function getUserByEmail(email, pool): Promise<DBuserOutput | null> {
+export async function getUserByEmail(email : string, pool): Promise<DBuserOutput | null> {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -38,7 +38,7 @@ export async function createUser(user: User, pool): Promise<RegisterResponse> {
   }
 }
 
-export async function login(loginData, pool): Promise<SessionResponse> {
+export async function login(loginData : User, pool): Promise<SessionResponse> {
   try {
     let user :DBuserOutput|null = await getUserByEmail(loginData.email, pool);
     if (user) {
@@ -56,7 +56,7 @@ export async function login(loginData, pool): Promise<SessionResponse> {
   }
 }
 
-export async function getUserById(id, pool): Promise<any> {
+export async function getUserById(id : number,  pool): Promise<any> {
   let conn;
   try {
     conn = await pool.getConnection();

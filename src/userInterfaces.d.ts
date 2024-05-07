@@ -19,3 +19,7 @@ export interface DBuserOutput {
     username:string;
     id:number;
 }
+export interface User{
+    email:string,
+    password:string,
+}
