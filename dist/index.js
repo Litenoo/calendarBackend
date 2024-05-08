@@ -13,8 +13,8 @@ import session from "express-session";
 import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
-import { createUser, login, getUserById } from './accountFunctions.js';
-import { createRecoveryToken, getRecoveryToken } from './passwordRecovery.js';
+import { createUser, login, getUserById, changePassword } from './accountFunctions.js';
+import { createRecoveryToken, getRecoveryToken, getEmailByToken } from './passwordRecovery.js';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,6 +39,7 @@ const pool = mariaDB.createPool({
 app.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const operationStatus = yield createUser(req.body, pool);
+        res.status(200);
         res.send(operationStatus);
     }
     catch (err) {
@@ -77,33 +78,32 @@ app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.end();
     }
 }));
-app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post('/passwordRecoveryToken', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const usersEmail = JSON.stringify(req.body.email);
+        const usersEmail = req.body.email;
         yield createRecoveryToken(usersEmail, pool);
         const recoveryToken = yield getRecoveryToken(usersEmail, pool);
         const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token;
-        console.log('recoverylink : ', recoveryLink);
         yield fetch(' https://api.mailersend.com/v1/email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'Authorization': 'Bearer mlsn.af2fb9be9fb0adcddc76eddbe1949b689777c3754d4c7948da5996af0191b9cc',
+                'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
             },
             body: JSON.stringify({
                 'from': {
-                    'email': 'MS_8EhF3E@trial-ynrw7gyq7oo42k8e.mlsender.net'
+                    'email': `${process.env.MAIL_SENDER}`
                 },
                 'to': [
                     {
-                        'email': 'pokelukaspl@gmail.com'
+                        'email': `${usersEmail}`
                     }
                 ],
                 'subject': 'Email Recovery for your calendarApp account',
                 'personalization': [
                     {
-                        'email': 'pokelukaspl@gmail.com',
+                        'email': `${usersEmail}`,
                         'data': {
                             'name': 'support noreply',
                             'account_name': 'noreply',
@@ -112,12 +112,54 @@ app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, func
                         }
                     }
                 ],
-                'template_id': 'k68zxl2z019lj905',
+                'template_id': `${process.env.TEMPLATE_ID}`,
             })
         });
     }
     catch (err) {
         console.log(err);
+    }
+}));
+app.post('/checkRecoveryToken', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = yield getEmailByToken(pool, req.body.token);
+        if (email) {
+            res.status(200);
+            res.json({ "errorMessage": null });
+        }
+        else {
+            res.status(403);
+            res.json({ "errorMessage": 'Token is not valid' });
+        }
+    }
+    catch (err) {
+        res.status(403);
+        res.send('No token !');
+    }
+    finally {
+        res.end();
+    }
+}));
+app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const email = yield getEmailByToken(pool, req.body.token);
+        const token = yield getRecoveryToken(email, pool);
+        if (token === req.body.token) {
+            console.log('handler : updating user with email : ', email.email, 'changing password to : ', req.body.password);
+            yield changePassword(pool, { email: email.email, password: req.body.password });
+        }
+        else {
+            res.status(404);
+            res.send('Access denied. Please contact with service administrator.');
+        }
+    }
+    catch (err) {
+        console.log(err);
+        res.status(503);
+        res.send('Service not available. Please contact with service administrator.');
+    }
+    finally {
+        res.end();
     }
 }));
 app.listen(process.env.PORT, () => {

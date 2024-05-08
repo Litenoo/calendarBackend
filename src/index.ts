@@ -5,8 +5,8 @@ import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
 
-import {createUser, login, getUserById} from './accountFunctions.js';
-import {createRecoveryToken, getRecoveryToken} from './passwordRecovery.js';
+import {createUser, login, getUserById, changePassword} from './accountFunctions.js';
+import {createRecoveryToken, getRecoveryToken, getEmailByToken} from './passwordRecovery.js';
 import {RegisterResponse, SessionResponse} from './userInterfaces';
 
 
@@ -38,6 +38,7 @@ const pool = mariaDB.createPool({
 app.post('/register', async (req, res) => {
   try {
     const operationStatus: RegisterResponse = await createUser(req.body, pool);
+    res.status(200);
     res.send(operationStatus);
   } catch (err) {
     res.status(500).send('Please retry or contact with server administrator');
@@ -62,45 +63,44 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/userData', async (req, res) => {
-  try{
+  try {
     const userData = await getUserById(req.cookies.userId.id, pool);
     res.json(userData.user);
-  }catch(err){
+  } catch (err) {
     res.status(403);
     res.send('No cookie');
-  }finally{
-  res.end();
+  } finally {
+    res.end();
   }
 });
 
-app.post('/changePassword', async (req, res)=>{ //dev move to passwordRecovery.ts
-  try{
-    const usersEmail = JSON.stringify(req.body.email);
+app.post('/passwordRecoveryToken', async (req, res) => { //dev move to passwordRecovery.ts and first check if users with this email exists
+  try {
+    const usersEmail = req.body.email
     await createRecoveryToken(usersEmail, pool);
     const recoveryToken = await getRecoveryToken(usersEmail, pool);
-    const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token; // dev if it is possible change that to real one url + its not needed to fetch 2 times same toiken
-    console.log('recoverylink : ', recoveryLink);
+    const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token; // dev if it is possible change that to real one url + it's not needed to fetch 2 times same token
 
     await fetch(' https://api.mailersend.com/v1/email', {
-      method:'POST',
-      headers:{
-        'Content-Type' : 'application/json',
-        'X-Requested-With':'XMLHttpRequest',
-        'Authorization' : 'Bearer token',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
       },
       body: JSON.stringify({
         'from': {
-          'email': 'mailForSender'
+          'email': `${process.env.MAIL_SENDER}`
         },
         'to': [
           {
-            'email': 'mail@gmail.com'
+            'email': `${usersEmail}`
           }
         ],
         'subject': 'Email Recovery for your calendarApp account',
         'personalization': [
           {
-            'email': 'mail@gmail.com', //replace with users email
+            'email': `${usersEmail}`, //replace with users email
             'data': {
               'name': 'support noreply',
               'account_name': 'noreply',
@@ -109,11 +109,49 @@ app.post('/changePassword', async (req, res)=>{ //dev move to passwordRecovery.t
             }
           }
         ],
-        'template_id': 'templatetoken',
+        'template_id': `${process.env.TEMPLATE_ID}`,
       })
     })
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+app.post('/checkRecoveryToken', async (req, res, next) => {
+  try {
+    const email = await getEmailByToken(pool, req.body.token);
+    if (email) {
+      res.status(200);
+      res.json({"errorMessage": null});
+    } else {
+      res.status(403);
+      res.json({"errorMessage": 'Token is not valid'});
+    }
+  } catch (err) {
+    res.status(403);
+    res.send('No token !');
+  } finally {
+    res.end();
+  }
+});
+
+app.post('/changePassword', async (req, res) => {
+  try{
+    const email = await getEmailByToken(pool, req.body.token);
+    const token = await getRecoveryToken(email, pool);
+    if (token === req.body.token) {
+      console.log('handler : updating user with email : ', email.email, 'changing password to : ', req.body.password); //dev change naming of email.email
+      await changePassword(pool, {email: email.email, password: req.body.password});
+    }else{
+      res.status(404)
+      res.send('Access denied. Please contact with service administrator.');
+    }
   }catch(err){
     console.log(err);
+    res.status(503);
+    res.send('Service not available. Please contact with service administrator.');
+  }finally{
+    res.end()
   }
 });
 

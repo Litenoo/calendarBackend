@@ -88,4 +88,22 @@ export function getUserById(id, pool) {
         }
     });
 }
+export function changePassword(pool, userData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let conn;
+        try {
+            conn = yield pool.getConnection();
+            console.log('email : ', userData.email, 'password : ', userData.password);
+            const hash = yield bcrypt.hash(userData.password, 10);
+            yield conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
+        }
+        catch (err) {
+            console.log(err);
+        }
+        finally {
+            if (conn)
+                conn.end();
+        }
+    });
+}
 //# sourceMappingURL=accountFunctions.js.map

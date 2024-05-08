@@ -15,13 +15,30 @@ export async function createRecoveryToken(email: string, pool) { //dev add check
   }
 }
 
-export async function getRecoveryToken(email: string, pool) {
+export async function getRecoveryToken(userData, pool) {
   let conn;
   try {
     conn = await pool.getConnection();
-    const token = await pool.query('SELECT token FROM tokens WHERE email = ? LIMIT 1', [email]);
+    const token = await pool.query('SELECT token FROM tokens WHERE email = ?', [userData.email]);
     if (token) {
-      return token[0];
+      return token[0].token;
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    if (conn) conn.end();
+  }
+}
+
+export async function getEmailByToken(pool, inputToken: string) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const email = await pool.query('SELECT email FROM tokens WHERE token = ? LIMIT 1', [inputToken]);
+    if (email) {
+      return email[0];
     } else {
       return null;
     }

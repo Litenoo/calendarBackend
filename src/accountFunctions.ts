@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 
 import {RegisterResponse, SessionResponse, User, DBuserOutput} from "./userInterfaces";
 
+
+//dev move pool to first place to keep organisation
 export async function getUserByEmail(email : string, pool): Promise<DBuserOutput | null> {
   let conn;
   try {
@@ -66,5 +68,19 @@ export async function getUserById(id : number,  pool): Promise<any> {
     return {user: null};
   } finally {
     if (conn) conn.end();
+  }
+}
+
+export async function changePassword(pool, userData){
+  let conn;
+  try{
+    conn = await pool.getConnection();
+    console.log('email : ',userData.email,'password : ', userData.password ); //dev
+    const hash = await bcrypt.hash(userData.password, 10);
+    await conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
+  }catch(err){
+    console.log(err);
+  }finally{
+    if(conn) conn.end()
   }
 }

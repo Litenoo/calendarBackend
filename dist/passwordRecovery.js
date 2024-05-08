@@ -27,14 +27,36 @@ export function createRecoveryToken(email, pool) {
         }
     });
 }
-export function getRecoveryToken(email, pool) {
+export function getRecoveryToken(userData, pool) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
             conn = yield pool.getConnection();
-            const token = yield pool.query('SELECT token FROM tokens WHERE email = ? LIMIT 1', [email]);
+            const token = yield pool.query('SELECT token FROM tokens WHERE email = ?', [userData.email]);
             if (token) {
-                return token[0];
+                return token[0].token;
+            }
+            else {
+                return null;
+            }
+        }
+        catch (err) {
+            console.log(err);
+        }
+        finally {
+            if (conn)
+                conn.end();
+        }
+    });
+}
+export function getEmailByToken(pool, inputToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let conn;
+        try {
+            conn = yield pool.getConnection();
+            const email = yield pool.query('SELECT email FROM tokens WHERE token = ? LIMIT 1', [inputToken]);
+            if (email) {
+                return email[0];
             }
             else {
                 return null;
