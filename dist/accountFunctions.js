@@ -114,4 +114,3 @@ export function changePassword(pool, userData) {
         }
     });
 }
-//# sourceMappingURL=accountFunctions.js.map

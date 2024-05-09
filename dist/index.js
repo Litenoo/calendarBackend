@@ -132,4 +132,3 @@ app.post('/changePassword', (req, res) => __awaiter(void 0, void 0, void 0, func
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on PORT : ${process.env.PORT}`);
 });
-//# sourceMappingURL=index.js.map

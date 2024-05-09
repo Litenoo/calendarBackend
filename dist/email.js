@@ -42,4 +42,3 @@ export function sendWelcomeEmail(userData) {
         });
     });
 }
-//# sourceMappingURL=email.js.map
