@@ -5,8 +5,9 @@ import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
 
-import {createUser, login, getUserById, changePassword} from './accountFunctions.js';
-import {createRecoveryToken, getRecoveryToken, getEmailByToken} from './passwordRecovery.js';
+import {createUser, login, getUserById, changePassword, getUserByEmail} from './accountFunctions.js';
+import {getRecoveryToken, getEmailByToken, sendRecoveryCode} from './passwordRecovery.js';
+import {sendWelcomeEmail} from './email.js';
 import {RegisterResponse, SessionResponse} from './userInterfaces';
 
 
@@ -37,9 +38,10 @@ const pool = mariaDB.createPool({
 
 app.post('/register', async (req, res) => {
   try {
-    const operationStatus: RegisterResponse = await createUser(req.body, pool);
+    const operationStatus: RegisterResponse = await createUser(pool, req.body);
+    await sendWelcomeEmail({email : req.body.email, username : req.body.username});
     res.status(200);
-    res.send(operationStatus);
+    res.json(operationStatus);
   } catch (err) {
     res.status(500).send('Please retry or contact with server administrator');
   }
@@ -47,13 +49,13 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
-  const userData: SessionResponse = await login(req.body, pool);
+  const userData: SessionResponse = await login(pool, req.body);
   try {
     if (userData.id) {
       res.cookie('userId', userData, {maxAge: 90000, httpOnly: true});
-      res.status(200).send({message: 'Login process went successful'});
+      res.status(200).json({errorMessage: 'Login process went successful'});
     } else {
-      res.status(401).json({message: userData.error});
+      res.status(401).json({errorMessage: userData.error});
     }
   } catch (err) {
     console.log(err);
@@ -64,7 +66,7 @@ app.post('/login', async (req, res) => {
 
 app.post('/userData', async (req, res) => {
   try {
-    const userData = await getUserById(req.cookies.userId.id, pool);
+    const userData = await getUserById(pool, req.cookies.userId.id);
     res.json(userData.user);
   } catch (err) {
     res.status(403);
@@ -75,46 +77,11 @@ app.post('/userData', async (req, res) => {
 });
 
 app.post('/passwordRecoveryToken', async (req, res) => { //dev move to passwordRecovery.ts and first check if users with this email exists
-  try {
-    const usersEmail = req.body.email
-    await createRecoveryToken(usersEmail, pool);
-    const recoveryToken = await getRecoveryToken(usersEmail, pool);
-    const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token; // dev if it is possible change that to real one url + it's not needed to fetch 2 times same token
-
-    await fetch(' https://api.mailersend.com/v1/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
-      },
-      body: JSON.stringify({
-        'from': {
-          'email': `${process.env.MAIL_SENDER}`
-        },
-        'to': [
-          {
-            'email': `${usersEmail}`
-          }
-        ],
-        'subject': 'Email Recovery for your calendarApp account',
-        'personalization': [
-          {
-            'email': `${usersEmail}`, //replace with users email
-            'data': {
-              'name': 'support noreply',
-              'account_name': 'noreply',
-              'support_email': 'supportCalendarApp@example.com',
-              'link': `${recoveryLink}`,
-            }
-          }
-        ],
-        'template_id': `${process.env.TEMPLATE_ID}`,
-      })
-    })
-  } catch (err) {
-    console.log(err);
+  const account = await getUserByEmail(pool, req.body.email)
+  if(account){
+  await sendRecoveryCode(pool, req.body.email);
   }
+  res.status(200);
 });
 
 app.post('/checkRecoveryToken', async (req, res, next) => {
@@ -136,21 +103,21 @@ app.post('/checkRecoveryToken', async (req, res, next) => {
 });
 
 app.post('/changePassword', async (req, res) => {
-  try{
+  try {
     const email = await getEmailByToken(pool, req.body.token);
     const token = await getRecoveryToken(email, pool);
     if (token === req.body.token) {
       console.log('handler : updating user with email : ', email.email, 'changing password to : ', req.body.password); //dev change naming of email.email
       await changePassword(pool, {email: email.email, password: req.body.password});
-    }else{
+    } else {
       res.status(404)
       res.send('Access denied. Please contact with service administrator.');
     }
-  }catch(err){
+  } catch (err) {
     console.log(err);
     res.status(503);
     res.send('Service not available. Please contact with service administrator.');
-  }finally{
+  } finally {
     res.end()
   }
 });

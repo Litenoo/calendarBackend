@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import 'dotenv/config';
 import bcrypt from "bcrypt";
-export function getUserByEmail(email, pool) {
+export function getUserByEmail(pool, email) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
@@ -26,23 +26,32 @@ export function getUserByEmail(email, pool) {
         }
     });
 }
-export function createUser(user, pool) {
+export function checkUsrExists(pool, email) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = yield getUserByEmail(pool, email);
+        if (user) {
+            return true;
+        }
+        return false;
+    });
+}
+export function createUser(pool, user) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
-            const userExist = yield getUserByEmail(user.email, pool);
-            if (userExist !== null) {
+            const userExist = yield checkUsrExists(pool, user.email);
+            if (!userExist) {
                 conn = yield pool.getConnection();
                 const hash = yield bcrypt.hash(user.password, 10);
                 yield conn.query('INSERT INTO users (email, password, username) VALUES (?,?,?)', [user.email, hash, user.username]);
                 return { registerSuccess: true };
             }
             else {
-                return { registerSuccess: false, error: "There is already user with that email." };
+                return { registerSuccess: false, errorMessage: "There is already user with that email." };
             }
         }
         catch (err) {
-            return { registerSuccess: false, error: err };
+            return { registerSuccess: false, errorMessage: `${err} --> Please contact with website administrator` };
         }
         finally {
             if (conn)
@@ -50,10 +59,10 @@ export function createUser(user, pool) {
         }
     });
 }
-export function login(loginData, pool) {
+export function login(pool, loginData) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            let user = yield getUserByEmail(loginData.email, pool);
+            let user = yield getUserByEmail(pool, loginData.email);
             if (user) {
                 const result = yield bcrypt.compare(loginData.password, user.password);
                 if (result) {
@@ -71,7 +80,7 @@ export function login(loginData, pool) {
         }
     });
 }
-export function getUserById(id, pool) {
+export function getUserById(pool, id) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
@@ -93,7 +102,6 @@ export function changePassword(pool, userData) {
         let conn;
         try {
             conn = yield pool.getConnection();
-            console.log('email : ', userData.email, 'password : ', userData.password);
             const hash = yield bcrypt.hash(userData.password, 10);
             yield conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
         }

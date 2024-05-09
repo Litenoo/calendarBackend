@@ -5,7 +5,7 @@ export interface User {
 }
 export interface RegisterResponse{
     registerSuccess:boolean,
-    error?:any
+    errorMessage?:any
 }
 export interface SessionResponse{
     id?:number;

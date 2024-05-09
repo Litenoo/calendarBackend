@@ -8,12 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import 'dotenv/config';
-import randomString from 'randomstring';
-export function createRecoveryToken(email, pool) {
+import randomstring from 'randomstring';
+function createRecoveryToken() {
+    try {
+        return randomstring.generate(48);
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
+function saveRecoveryToken(pool, email, recoveryToken) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
         try {
-            const recoveryToken = randomString.generate(48);
             conn = yield pool.getConnection();
             yield conn.query('DELETE FROM tokens WHERE email = ?', [email]);
             yield conn.query('INSERT INTO tokens (email, token) VALUES (?,?)', [email, recoveryToken]);
@@ -68,6 +75,49 @@ export function getEmailByToken(pool, inputToken) {
         finally {
             if (conn)
                 conn.end();
+        }
+    });
+}
+export function sendRecoveryCode(pool, usersEmail) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const recoveryToken = createRecoveryToken();
+            yield saveRecoveryToken(pool, usersEmail, recoveryToken);
+            const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken;
+            yield fetch(' https://api.mailersend.com/v1/email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    'from': {
+                        'email': `${process.env.MAIL_SENDER}`
+                    },
+                    'to': [
+                        {
+                            'email': `${usersEmail}`
+                        }
+                    ],
+                    'subject': 'Password Recovery for your calendarApp account',
+                    'personalization': [
+                        {
+                            'email': `${usersEmail}`,
+                            'data': {
+                                'name': 'support noreply',
+                                'account_name': 'noreply',
+                                'support_email': 'supportCalendarApp@example.com',
+                                'link': `${recoveryLink}`,
+                            }
+                        }
+                    ],
+                    'template_id': `${process.env.RECOVERY_TEMPLATE_ID}`,
+                })
+            });
+        }
+        catch (err) {
+            console.log(err);
         }
     });
 }

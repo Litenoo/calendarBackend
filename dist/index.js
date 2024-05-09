@@ -13,8 +13,9 @@ import session from "express-session";
 import mariaDB from "mariadb";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
-import { createUser, login, getUserById, changePassword } from './accountFunctions.js';
-import { createRecoveryToken, getRecoveryToken, getEmailByToken } from './passwordRecovery.js';
+import { createUser, login, getUserById, changePassword, getUserByEmail } from './accountFunctions.js';
+import { getRecoveryToken, getEmailByToken, sendRecoveryCode } from './passwordRecovery.js';
+import { sendWelcomeEmail } from './email.js';
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,9 +39,10 @@ const pool = mariaDB.createPool({
 });
 app.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const operationStatus = yield createUser(req.body, pool);
+        const operationStatus = yield createUser(pool, req.body);
+        yield sendWelcomeEmail({ email: req.body.email, username: req.body.username });
         res.status(200);
-        res.send(operationStatus);
+        res.json(operationStatus);
     }
     catch (err) {
         res.status(500).send('Please retry or contact with server administrator');
@@ -48,14 +50,14 @@ app.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* 
 }));
 app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
-    const userData = yield login(req.body, pool);
+    const userData = yield login(pool, req.body);
     try {
         if (userData.id) {
             res.cookie('userId', userData, { maxAge: 90000, httpOnly: true });
-            res.status(200).send({ message: 'Login process went successful' });
+            res.status(200).json({ errorMessage: 'Login process went successful' });
         }
         else {
-            res.status(401).json({ message: userData.error });
+            res.status(401).json({ errorMessage: userData.error });
         }
     }
     catch (err) {
@@ -67,7 +69,7 @@ app.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userData = yield getUserById(req.cookies.userId.id, pool);
+        const userData = yield getUserById(pool, req.cookies.userId.id);
         res.json(userData.user);
     }
     catch (err) {
@@ -79,46 +81,11 @@ app.post('/userData', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 }));
 app.post('/passwordRecoveryToken', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const usersEmail = req.body.email;
-        yield createRecoveryToken(usersEmail, pool);
-        const recoveryToken = yield getRecoveryToken(usersEmail, pool);
-        const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken.token;
-        yield fetch(' https://api.mailersend.com/v1/email', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
-            },
-            body: JSON.stringify({
-                'from': {
-                    'email': `${process.env.MAIL_SENDER}`
-                },
-                'to': [
-                    {
-                        'email': `${usersEmail}`
-                    }
-                ],
-                'subject': 'Email Recovery for your calendarApp account',
-                'personalization': [
-                    {
-                        'email': `${usersEmail}`,
-                        'data': {
-                            'name': 'support noreply',
-                            'account_name': 'noreply',
-                            'support_email': 'supportCalendarApp@example.com',
-                            'link': `${recoveryLink}`,
-                        }
-                    }
-                ],
-                'template_id': `${process.env.TEMPLATE_ID}`,
-            })
-        });
+    const account = yield getUserByEmail(pool, req.body.email);
+    if (account) {
+        yield sendRecoveryCode(pool, req.body.email);
     }
-    catch (err) {
-        console.log(err);
-    }
+    res.status(200);
 }));
 app.post('/checkRecoveryToken', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {

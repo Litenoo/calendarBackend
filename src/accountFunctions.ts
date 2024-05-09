@@ -4,8 +4,7 @@ import bcrypt from "bcrypt";
 import {RegisterResponse, SessionResponse, User, DBuserOutput} from "./userInterfaces";
 
 
-//dev move pool to first place to keep organisation
-export async function getUserByEmail(email : string, pool): Promise<DBuserOutput | null> {
+export async function getUserByEmail(pool, email : string): Promise<DBuserOutput | null> {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -18,31 +17,41 @@ export async function getUserByEmail(email : string, pool): Promise<DBuserOutput
   }
 }
 
-export async function createUser(user: User, pool): Promise<RegisterResponse> {
+export async function checkUsrExists(pool, email) : Promise<boolean>{
+  const user = await getUserByEmail(pool, email);
+  if(user){
+    return true;
+  }
+  return false;
+}
+
+export async function createUser(pool, user: User): Promise<RegisterResponse> { //dev BUG its possible to create moultiple accounts with one email
   let conn;
   try {
-    const userExist: User | null = await getUserByEmail(user.email, pool);
-    if (userExist !== null) {
+    const userExist = await checkUsrExists(pool, user.email);
+    if (!userExist) {
       conn = await pool.getConnection();
       const hash = await bcrypt.hash(user.password, 10);
+
       await conn.query(
         'INSERT INTO users (email, password, username) VALUES (?,?,?)',
         [user.email, hash, user.username],
       );
+
       return {registerSuccess: true};
     } else {
-      return {registerSuccess: false, error: "There is already user with that email."};
+      return {registerSuccess: false, errorMessage: "There is already user with that email."};
     }
   } catch (err) {
-    return {registerSuccess: false, error: err};
+    return {registerSuccess: false, errorMessage: `${err} --> Please contact with website administrator`};
   } finally {
     if(conn) conn.end();
   }
 }
 
-export async function login(loginData : User, pool): Promise<SessionResponse> {
+export async function login(pool, loginData : User): Promise<SessionResponse> {
   try {
-    let user :DBuserOutput|null = await getUserByEmail(loginData.email, pool);
+    let user :DBuserOutput|null = await getUserByEmail(pool, loginData.email);
     if (user) {
       const result = await bcrypt.compare(loginData.password, user.password);
       if (result) {
@@ -58,7 +67,7 @@ export async function login(loginData : User, pool): Promise<SessionResponse> {
   }
 }
 
-export async function getUserById(id : number,  pool): Promise<any> {
+export async function getUserById(pool, id : number): Promise<any> {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -75,7 +84,6 @@ export async function changePassword(pool, userData){
   let conn;
   try{
     conn = await pool.getConnection();
-    console.log('email : ',userData.email,'password : ', userData.password ); //dev
     const hash = await bcrypt.hash(userData.password, 10);
     await conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
   }catch(err){

@@ -12,7 +12,8 @@
     "types": ["node", "jest"],
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "importsNotUsedAsValues":"remove"
   },
   "include": [
     "src/**/*.ts"
