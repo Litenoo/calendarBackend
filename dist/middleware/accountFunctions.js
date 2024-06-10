@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import 'dotenv/config';
 import bcrypt from "bcrypt";
-import logger from '../logger.js';
+import logger from '../logger';
 export function getUserByEmail(pool, email) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;

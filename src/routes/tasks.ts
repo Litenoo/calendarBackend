@@ -16,9 +16,8 @@ router.use(cors({
 
 router.post('/getTasksList', async (req, res) => {
   try {
-    //add some auth
-    const response = await pullTasksList(pool, 15, 4, 2024);
-    console.log(response);
+    // dev add some auth
+    const response = await pullTasksList(pool, req.cookies.userId.id, 4, 2024);
     res.status(200);
     res.json(response);
   } catch (err) {

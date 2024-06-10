@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import bcrypt from "bcrypt";
-import logger from '../logger.js';
+import logger from '../logger';
 
 import {RegisterResponse, SessionResponse, User, DBuserOutput} from "../userInterfaces";
 
@@ -18,7 +18,7 @@ export async function getUserByEmail(pool, email : string): Promise<DBuserOutput
   }
 }
 
-export async function checkUsrExists(pool, email) : Promise<boolean>{
+export async function checkUsrExists(pool, email : string) : Promise<boolean>{
   const user = await getUserByEmail(pool, email);
   return !!user; //dev not sure if it works !
 }

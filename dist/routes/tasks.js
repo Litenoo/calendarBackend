@@ -20,8 +20,7 @@ router.use(cors({
 }));
 router.post('/getTasksList', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const response = yield pullTasksList(pool, 15, 4, 2024);
-        console.log(response);
+        const response = yield pullTasksList(pool, req.cookies.userId.id, 4, 2024);
         res.status(200);
         res.json(response);
     }

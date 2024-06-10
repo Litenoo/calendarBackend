@@ -7,10 +7,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import logger from '../logger.js';
+import logger from '../logger';
 export function pushTask(pool, data) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log(data);
+    });
+}
+export function removeTask(pool, taskId) {
+    return __awaiter(this, void 0, void 0, function* () {
     });
 }
 export function pullTasksList(pool, userId, month, year) {
@@ -18,11 +22,11 @@ export function pullTasksList(pool, userId, month, year) {
         let conn;
         try {
             conn = yield pool.getConnection();
-            return yield conn.query("SELECT title, duration, date, priority, status, color, id FROM tasks WHERE userID = ? AND JSON_EXTRACT(date, '$.month') = ? AND JSON_EXTRACT(date, '$.year') = ?", [userId, month, year]);
+            return yield conn.query("SELECT title, duration, date, priority, status, color, id " +
+                "FROM tasks WHERE userID = ? AND JSON_EXTRACT(date, '$.month') = ? AND JSON_EXTRACT(date, '$.year') = ?", [userId, month, year]);
         }
         catch (err) {
             logger.error("Error during tasks pull", err);
-            console.log(err, 'LINE 17');
         }
         finally {
             if (conn)

@@ -1,16 +1,8 @@
 import 'dotenv/config';
-import mariaDB from 'mariadb';
 import {createUser, login, getUserByEmail} from '../src/middleware/accountFunctions';
 import {SessionResponse} from "../src/userInterfaces";
 
-const pool = mariaDB.createPool({ //WARNING connected database gets empty every test run.
-  host: "127.0.0.1",
-  port: 3306,
-  user: 'root',
-  password: process.env.DATABASE_PASSWORD,
-  database: 'testCalendarApp',
-  connectionLimit: 10,
-});
+import pool from "../src/dbPool";
 
 
 async function killConnectionDB(): Promise<void> {
@@ -19,14 +11,14 @@ async function killConnectionDB(): Promise<void> {
 }
 
 test('Registration system - Creating new account works properly', async () => {
-  const registerData = await createUser({
+  const registerData = await createUser(pool, {
     email: 't@t',
     password: 't',
     username: 't',
-  }, pool);
+  });
 
   expect(registerData).toMatchObject({registerSuccess: true});
-  const response = await getUserByEmail('t@t', pool);
+  const response = await getUserByEmail(pool, 't@t');
   expect(response).toMatchObject({email: 't@t', username: 't'});
 
 });
@@ -49,21 +41,21 @@ test('Login system - User validation and sessions are working properly', async (
   }
 
   //Case 1 - Wrong email
-  let user: SessionResponse = await login(notValidUserData, pool);
+  let user: SessionResponse = await login(pool, notValidUserData);
 
   expect(user.error).toEqual('There is no user with given email.');
   expect(user.email).toEqual(undefined);
   expect(user.id).toBeFalsy();
 
   //Case 2 - Wrong password
-  user = await login(notValidUserData2, pool);
+  user = await login(pool, notValidUserData2);
 
   expect(user.error).toEqual('Wrong password.');
   expect(user.email).toEqual(undefined);
   expect(user.id).toBeFalsy();
 
   //Case 3 - Correct login data
-  user = await login(validLoginData, pool);
+  user = await login(pool, validLoginData);
 
   expect(user.error).toEqual(undefined);
   expect(user.email).toEqual('t@t');
