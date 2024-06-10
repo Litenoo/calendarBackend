@@ -1,4 +1,3 @@
-
 {
   "presets": [
     [
@@ -10,5 +9,17 @@
       }
     ],
     "@babel/preset-typescript"
+  ],
+  "plugins": [
+    ["babel-plugin-transform-import-ignore", {"patterns": [".js"]}],
+    [
+      "module-resolver",
+      {
+        "root": ["."],
+        "alias": {
+          "@src": "./src"
+        }
+      }
+    ]
   ]
 }

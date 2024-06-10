@@ -1,6 +1,6 @@
 import { Task } from '../userInterfaces';
 //@ts-ignore
-import logger from '../logger'
+import logger from '../logger.js'
 
 
 // DEV IMPORTANT ! make verification for tasks. check token or something.

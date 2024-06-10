@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from "bcrypt";
-import logger from '../logger';
+import logger from '../logger.js';
+
 
 import {RegisterResponse, SessionResponse, User, DBuserOutput} from "../userInterfaces";
 

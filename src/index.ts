@@ -1,6 +1,8 @@
 import 'dotenv/config';
 configDotenv();
 
+import 'module-alias';
+
 const { PORT, SESSION_SECRET, DATABASE_PASSWORD, NODE_ENV } = process.env;
 
 if (!PORT || !SESSION_SECRET || !DATABASE_PASSWORD) {

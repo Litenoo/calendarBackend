@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import 'dotenv/config';
 import randomstring from 'randomstring';
 import logger from '../logger.js';
@@ -18,110 +9,102 @@ function createRecoveryToken() {
         logger.error(`Error during the "createRecoveryToken" middleware`, err);
     }
 }
-function saveRecoveryToken(pool, email, recoveryToken) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let conn;
-        try {
-            conn = yield pool.getConnection();
-            yield conn.query('DELETE FROM tokens WHERE email = ?', [email]);
-            yield conn.query('INSERT INTO tokens (email, token) VALUES (?,?)', [email, recoveryToken]);
-        }
-        catch (err) {
-            logger.error(`Error during the "SaveRecoveryToken middleware"`, err);
-        }
-        finally {
-            if (conn)
-                conn.end();
-        }
-    });
+async function saveRecoveryToken(pool, email, recoveryToken) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query('DELETE FROM tokens WHERE email = ?', [email]);
+        await conn.query('INSERT INTO tokens (email, token) VALUES (?,?)', [email, recoveryToken]);
+    }
+    catch (err) {
+        logger.error(`Error during the "SaveRecoveryToken middleware"`, err);
+    }
+    finally {
+        if (conn)
+            conn.end();
+    }
 }
-export function getRecoveryToken(userData, pool) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let conn;
-        try {
-            conn = yield pool.getConnection();
-            const token = yield pool.query('SELECT token FROM tokens WHERE email = ?', [userData.email]);
-            if (token) {
-                return token[0].token;
-            }
-            else {
-                return null;
-            }
+export async function getRecoveryToken(userData, pool) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        const token = await pool.query('SELECT token FROM tokens WHERE email = ?', [userData.email]);
+        if (token) {
+            return token[0].token;
         }
-        catch (err) {
-            console.log(err);
-            logger.error(`Error during the "getRecoveryToken" middleware"`, err);
+        else {
+            return null;
         }
-        finally {
-            if (conn)
-                conn.end();
-        }
-    });
+    }
+    catch (err) {
+        console.log(err);
+        logger.error(`Error during the "getRecoveryToken" middleware"`, err);
+    }
+    finally {
+        if (conn)
+            conn.end();
+    }
 }
-export function getEmailByToken(pool, inputToken) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let conn;
-        try {
-            conn = yield pool.getConnection();
-            const email = yield pool.query('SELECT email FROM tokens WHERE token = ? LIMIT 1', [inputToken]);
-            if (email) {
-                console.log('getEmailByToken : ', email, 'token :', inputToken);
-                return email[0];
-            }
-            else {
-                return null;
-            }
+export async function getEmailByToken(pool, inputToken) {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        const email = await pool.query('SELECT email FROM tokens WHERE token = ? LIMIT 1', [inputToken]);
+        if (email) {
+            console.log('getEmailByToken : ', email, 'token :', inputToken);
+            return email[0];
         }
-        catch (err) {
-            logger.error(`Error during the "getEmailByToken middleware"`, err);
+        else {
+            return null;
         }
-        finally {
-            if (conn)
-                conn.end();
-        }
-    });
+    }
+    catch (err) {
+        logger.error(`Error during the "getEmailByToken middleware"`, err);
+    }
+    finally {
+        if (conn)
+            conn.end();
+    }
 }
-export function sendRecoveryCode(pool, usersEmail) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const recoveryToken = createRecoveryToken();
-            yield saveRecoveryToken(pool, usersEmail, recoveryToken);
-            const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken;
-            yield fetch(' https://api.mailersend.com/v1/email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
+export async function sendRecoveryCode(pool, usersEmail) {
+    try {
+        const recoveryToken = createRecoveryToken();
+        await saveRecoveryToken(pool, usersEmail, recoveryToken);
+        const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken;
+        await fetch(' https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Authorization': `Bearer ${process.env.MAIL_API_KEY}`,
+            },
+            body: JSON.stringify({
+                'from': {
+                    'email': `${process.env.MAIL_SENDER}`
                 },
-                body: JSON.stringify({
-                    'from': {
-                        'email': `${process.env.MAIL_SENDER}`
-                    },
-                    'to': [
-                        {
-                            'email': `${usersEmail}`
+                'to': [
+                    {
+                        'email': `${usersEmail}`
+                    }
+                ],
+                'subject': 'Password Recovery for your calendarApp account',
+                'personalization': [
+                    {
+                        'email': `${usersEmail}`,
+                        'data': {
+                            'name': 'support noreply',
+                            'account_name': 'noreply',
+                            'support_email': 'supportCalendarApp@example.com',
+                            'link': `${recoveryLink}`,
                         }
-                    ],
-                    'subject': 'Password Recovery for your calendarApp account',
-                    'personalization': [
-                        {
-                            'email': `${usersEmail}`,
-                            'data': {
-                                'name': 'support noreply',
-                                'account_name': 'noreply',
-                                'support_email': 'supportCalendarApp@example.com',
-                                'link': `${recoveryLink}`,
-                            }
-                        }
-                    ],
-                    'template_id': `${process.env.RECOVERY_TEMPLATE_ID}`,
-                })
-            });
-        }
-        catch (err) {
-            logger.error("Error during recovery code email sending", err);
-        }
-    });
+                    }
+                ],
+                'template_id': `${process.env.RECOVERY_TEMPLATE_ID}`,
+            })
+        });
+    }
+    catch (err) {
+        logger.error("Error during recovery code email sending", err);
+    }
 }
 //# sourceMappingURL=passwordRecovery.js.map

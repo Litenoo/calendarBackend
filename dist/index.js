@@ -1,5 +1,6 @@
 import 'dotenv/config';
 configDotenv();
+import 'module-alias';
 const { PORT, SESSION_SECRET, DATABASE_PASSWORD, NODE_ENV } = process.env;
 if (!PORT || !SESSION_SECRET || !DATABASE_PASSWORD) {
     throw new Error('Missing essential environment variables');
@@ -32,4 +33,4 @@ app.use(session({
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on PORT : ${process.env.PORT}`);
 });
-//# sourceMappingURL=index.js.mapS
+//# sourceMappingURL=index.js.map

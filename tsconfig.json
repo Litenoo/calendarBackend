@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "esnext",
+    "target": "ESNext",
     "moduleResolution": "node",
     "noImplicitAny": false,
     "removeComments": true,
@@ -12,9 +11,12 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "types": ["node", "jest"],
-    "allowSyntheticDefaultImports": true,
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@src/*": ["src/*"]
+    }
   },
   "include": [
     "src/**/*.ts"

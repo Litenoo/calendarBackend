@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import express from "express";
 import { pullTasksList } from "../middleware/tasksManagement.js";
 import { getEmailByToken } from "../middleware/passwordRecovery.js";
@@ -18,16 +9,16 @@ router.use(cors({
     origin: 'http://localhost:5173',
     credentials: true,
 }));
-router.post('/getTasksList', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/getTasksList', async (req, res) => {
     try {
-        const response = yield pullTasksList(pool, req.cookies.userId.id, 4, 2024);
+        const response = await pullTasksList(pool, req.cookies.userId.id, 4, 2024);
         res.status(200);
         res.json(response);
     }
     catch (err) {
         logger.error(`Error during fetching tasks list`, err);
     }
-}));
+});
 router.post('/saveTask', (req, res) => {
     const task = req.body.task;
     const user = getEmailByToken(pool, req.cookies.userId.id);
