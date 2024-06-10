@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import randomstring from 'randomstring';
+import logger from '../logger.js';
 
 // Probably issue with package
 // @ts-ignore
@@ -7,7 +8,7 @@ function createRecoveryToken() : string {
   try {
     return randomstring.generate(48);
   } catch (err) {
-    console.log(err);
+    logger.error(`Error during the "createRecoveryToken" middleware`, err);
   }
 }
 
@@ -18,7 +19,7 @@ async function saveRecoveryToken(pool, email:string, recoveryToken:string){
     await conn.query('DELETE FROM tokens WHERE email = ?', [email]);
     await conn.query('INSERT INTO tokens (email, token) VALUES (?,?)', [email, recoveryToken]);
   }catch(err){
-    console.log(err); //Winston
+    logger.error(`Error during the "SaveRecoveryToken middleware"`, err);
   }finally{
     if(conn) conn.end();
   }
@@ -37,6 +38,7 @@ export async function getRecoveryToken(userData, pool) {
     }
   } catch (err) {
     console.log(err);
+    logger.error(`Error during the "getRecoveryToken" middleware"`, err);
   } finally {
     if (conn) conn.end();
   }
@@ -48,12 +50,13 @@ export async function getEmailByToken(pool, inputToken: string) {
     conn = await pool.getConnection();
     const email = await pool.query('SELECT email FROM tokens WHERE token = ? LIMIT 1', [inputToken]);
     if (email) {
+      console.log('getEmailByToken : ', email, 'token :', inputToken)
       return email[0];
     } else {
       return null;
     }
   } catch (err) {
-    console.log(err);
+    logger.error(`Error during the "getEmailByToken middleware"`, err);
   } finally {
     if (conn) conn.end();
   }
@@ -63,7 +66,7 @@ export async function sendRecoveryCode(pool, usersEmail : string){
   try {
     const recoveryToken = createRecoveryToken();
     await saveRecoveryToken(pool, usersEmail, recoveryToken);
-    const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken; // dev if it is possible change that to real one url + it's not needed to fetch 2 times same token
+    const recoveryLink = 'http://localhost:5173/changePassword?token=' + recoveryToken;
 
     await fetch(' https://api.mailersend.com/v1/email', {
       method: 'POST',
@@ -84,7 +87,7 @@ export async function sendRecoveryCode(pool, usersEmail : string){
         'subject': 'Password Recovery for your calendarApp account',
         'personalization': [
           {
-            'email': `${usersEmail}`, //replace with users email
+            'email': `${usersEmail}`,
             'data': {
               'name': 'support noreply',
               'account_name': 'noreply',
@@ -97,6 +100,6 @@ export async function sendRecoveryCode(pool, usersEmail : string){
       })
     });
   } catch (err) {
-    console.log(err);
+    logger.error("Error during recovery code email sending", err);
   }
 }

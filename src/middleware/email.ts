@@ -1,4 +1,5 @@
 export async function sendWelcomeEmail(userData){
+  console.log('sendWelcome Email !   ', userData);
   await fetch(' https://api.mailersend.com/v1/email', {
     method: 'POST',
     headers: {
@@ -15,19 +16,18 @@ export async function sendWelcomeEmail(userData){
           'email': `${userData.email}`
         }
       ],
-      'subject': 'Email Recovery for your calendarApp account',
+      'subject': 'Thanks for creating account in calendarApp',
       'personalization': [
         {
-          'email': `${userData.email}`, //replace with users email
+          'email': `${userData.email}`,
           'data': {
             'name': 'support noreply',
             'account_name': 'noreply',
             'support_email': 'supportCalendarApp@example.com',
-            'link': `link`,
           }
         }
       ],
-      'template_id': `${process.env.RECOVERY_TEMPLATE_ID}`,
+      'template_id': `${process.env.WELCOME_TEMPLATE_ID}`,
     })
   });
 }

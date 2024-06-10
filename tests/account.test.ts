@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import mariaDB from 'mariadb';
-import {createUser, login, getUserByEmail} from '../src/accountFunctions';
+import {createUser, login, getUserByEmail} from '../src/middleware/accountFunctions';
 import {SessionResponse} from "../src/userInterfaces";
 
 const pool = mariaDB.createPool({ //WARNING connected database gets empty every test run.

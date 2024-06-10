@@ -9,12 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import 'dotenv/config';
 import randomstring from 'randomstring';
+import logger from '../logger.js';
 function createRecoveryToken() {
     try {
         return randomstring.generate(48);
     }
     catch (err) {
-        console.log(err);
+        logger.error(`Error during the "createRecoveryToken" middleware`, err);
     }
 }
 function saveRecoveryToken(pool, email, recoveryToken) {
@@ -26,7 +27,7 @@ function saveRecoveryToken(pool, email, recoveryToken) {
             yield conn.query('INSERT INTO tokens (email, token) VALUES (?,?)', [email, recoveryToken]);
         }
         catch (err) {
-            console.log(err);
+            logger.error(`Error during the "SaveRecoveryToken middleware"`, err);
         }
         finally {
             if (conn)
@@ -49,6 +50,7 @@ export function getRecoveryToken(userData, pool) {
         }
         catch (err) {
             console.log(err);
+            logger.error(`Error during the "getRecoveryToken" middleware"`, err);
         }
         finally {
             if (conn)
@@ -71,7 +73,7 @@ export function getEmailByToken(pool, inputToken) {
             }
         }
         catch (err) {
-            console.log(err);
+            logger.error(`Error during the "getEmailByToken middleware"`, err);
         }
         finally {
             if (conn)
@@ -118,7 +120,7 @@ export function sendRecoveryCode(pool, usersEmail) {
             });
         }
         catch (err) {
-            console.log(err);
+            logger.error("Error during recovery code email sending", err);
         }
     });
 }

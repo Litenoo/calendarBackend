@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import 'dotenv/config';
 import bcrypt from "bcrypt";
+import logger from '../logger.js';
 export function getUserByEmail(pool, email) {
     return __awaiter(this, void 0, void 0, function* () {
         let conn;
@@ -29,10 +30,7 @@ export function getUserByEmail(pool, email) {
 export function checkUsrExists(pool, email) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield getUserByEmail(pool, email);
-        if (user) {
-            return true;
-        }
-        return false;
+        return !!user;
     });
 }
 export function createUser(pool, user) {
@@ -75,7 +73,7 @@ export function login(pool, loginData) {
             return { error: 'There is no user with given email.' };
         }
         catch (err) {
-            console.log(err);
+            logger.error("Error during the login", err);
             return { error: 'There was an error occurred. Please contact with server administrator or retry.' };
         }
     });
@@ -106,6 +104,7 @@ export function changePassword(pool, userData) {
             yield conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
         }
         catch (err) {
+            logger.error("Error during the password changing", err);
             console.log(err);
         }
         finally {

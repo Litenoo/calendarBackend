@@ -2,20 +2,19 @@
   "compilerOptions": {
     "target": "es6",
     "module": "esnext",
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "noImplicitAny": false,
     "removeComments": true,
     "preserveConstEnums": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": false,
-    "noEmit": true,
+    "noEmit": false,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "types": ["node", "jest"],
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "esModuleInterop": true,
-    "importsNotUsedAsValues":"remove"
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*.ts"

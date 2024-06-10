@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import bcrypt from "bcrypt";
+import logger from '../logger.js';
 
-import {RegisterResponse, SessionResponse, User, DBuserOutput} from "./userInterfaces";
+import {RegisterResponse, SessionResponse, User, DBuserOutput} from "../userInterfaces";
 
 
 export async function getUserByEmail(pool, email : string): Promise<DBuserOutput | null> {
@@ -19,13 +20,10 @@ export async function getUserByEmail(pool, email : string): Promise<DBuserOutput
 
 export async function checkUsrExists(pool, email) : Promise<boolean>{
   const user = await getUserByEmail(pool, email);
-  if(user){
-    return true;
-  }
-  return false;
+  return !!user; //dev not sure if it works !
 }
 
-export async function createUser(pool, user: User): Promise<RegisterResponse> { //dev BUG its possible to create moultiple accounts with one email
+export async function createUser(pool, user: User): Promise<RegisterResponse> {
   let conn;
   try {
     const userExist = await checkUsrExists(pool, user.email);
@@ -62,7 +60,7 @@ export async function login(pool, loginData : User): Promise<SessionResponse> {
     }
     return {error: 'There is no user with given email.'};
   } catch (err) {
-    console.log(err);
+    logger.error("Error during the login", err);
     return {error: 'There was an error occurred. Please contact with server administrator or retry.'};
   }
 }
@@ -87,6 +85,7 @@ export async function changePassword(pool, userData){
     const hash = await bcrypt.hash(userData.password, 10);
     await conn.query('UPDATE users SET password = ? WHERE email = ?', [hash, userData.email]);
   }catch(err){
+    logger.error("Error during the password changing", err);
     console.log(err);
   }finally{
     if(conn) conn.end()
