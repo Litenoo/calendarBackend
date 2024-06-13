@@ -31,11 +31,10 @@ export interface User {
 }
 
 export interface Task {
-  task: {
-    usersId:number,
     title: string,
-    date: string
-    durationStart: number,
-    durationEnd: number,
-  }
+    color: string,
+    duration: object,
+    date: string,
+    priority: number,
+    status : number,
 }

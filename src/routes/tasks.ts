@@ -1,6 +1,6 @@
 import express from "express";
-import {pullTasksList} from "../middleware/tasksManagement.js";
-import {getEmailByToken} from "../middleware/passwordRecovery.js";
+import {pullTasksList, pushTask} from "../middleware/tasksManagement.js";
+import {getUserById} from "../middleware/accountFunctions.js";
 
 import pool from "../dbPool.js";
 import cors from "cors";
@@ -16,30 +16,37 @@ router.use(cors({
 
 router.post('/getTasksList', async (req, res) => {
   try {
-    // dev add some auth
-    const response = await pullTasksList(pool, req.cookies.userId.id, 4, 2024);
+    // dev add some auth not sure if needed
+    const response = await pullTasksList(pool, req.cookies.userId.id, 10, 2024); //dev change month & year
     res.status(200);
+    console.log(response);
     res.json(response);
   } catch (err) {
     logger.error(`Error during fetching tasks list`, err);
   }
 });
 
-router.post('/saveTask', (req, res) => {
-  const task = req.body.task;
-  const user = getEmailByToken(pool, req.cookies.userId.id);
-  console.log('Saving task for user : ', user);
+// DEV IMPORTANT ! check if any verification needed or can I trust to req.cookies;
+router.post('/pushTask', async (req, res) => {
+  try {
+    const task = req.body.task;
+    const userId = req.cookies.userId.id;
+    await pushTask(pool, task, userId);
+    console.log('Saving task for user : ', userId);
+  }catch (err){
+    logger.error(`Error during pushTask`, err);
+  }
 });
 
 router.post('/updateTask', (req, res) => {
   const task = req.body.task;
-  const user = getEmailByToken(pool, req.cookies.userId.id);
+  const user = getUserById(pool, req.cookies.userId.id);
   console.log('Updating task for user : ', user);
 });
 
 router.post('/deleteTask', (req, res) => {
   const task = req.body.task;
-  const user = getEmailByToken(pool, req.cookies.userId.id);
+  const user = getUserById(pool, req.cookies.userId.id);
   console.log('Deleting task for user : ', user);
 });
 

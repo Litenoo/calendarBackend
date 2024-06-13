@@ -3,9 +3,23 @@ import { Task } from '../userInterfaces';
 import logger from '../logger.js'
 
 
-// DEV IMPORTANT ! make verification for tasks. check token or something.
-export async function pushTask (pool, data : Task){
-  console.log(data);
+// DEV IMPORTANT ! check if any verification needed
+export async function pushTask (pool, task : Task, userId){
+  let conn;
+  try {
+    const {title, color, duration, priority, status} = task;
+    let date = task.date.toString();
+    let dateArray = date.split('-');
+    const dateObject = {year : dateArray[0], month : dateArray[1], day: dateArray[2]};
+    console.log("date : ", dateObject);
+    conn = await pool.getConnection();
+    return await conn.query(
+      "INSERT INTO tasks (userId, title, color, duration, date, priority, status) VALUES (?,?,?,?,?,?,?)",
+      [userId, title, color, JSON.stringify(duration), JSON.stringify(dateObject), priority, status],
+    );
+  }catch(err){
+    logger.error("Error during pushing task", err);
+  }
 }
 
 export async function removeTask(pool, taskId){
