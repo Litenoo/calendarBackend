@@ -1,0 +1,11 @@
+version: '3.1'
+
+services:
+  mariadb:
+    build:
+      context: ../db
+    container_name: mariadb-container
+    env_file:
+      - ../.env
+    ports:
+      - "3306:3306"

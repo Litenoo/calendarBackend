@@ -1,0 +1,27 @@
+CREATE DATABASE IF NOT EXISTS calendarApp;
+USE calendarApp;
+
+CREATE TABLE IF NOT EXISTS users(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(50) NOT NULL,
+    password VARCHAR(60) NOT NULL,
+    username VARCHAR(30) NOT NULL
+)
+
+CREATE TABLE IF NOT EXISTS tokens(
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(60),
+    token VARCHAR(90),
+    date DATE
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    userID INT NOT NULL,
+    title VARCHAR(32) NOT NULL,
+    color VARCHAR(7),
+    duration JSON,
+    date JSON,
+    priority INT,
+    status INT
+);

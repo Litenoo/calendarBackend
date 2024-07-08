@@ -38,3 +38,9 @@ export interface Task {
     priority: number,
     status : number,
 }
+
+export interface TaskQuery {
+  userId : number,
+  year : number,
+  month : number,
+}

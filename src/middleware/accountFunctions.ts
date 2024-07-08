@@ -50,7 +50,9 @@ export async function createUser(pool, user: User): Promise<RegisterResponse> {
 
 export async function login(pool, loginData : User): Promise<SessionResponse> {
   try {
+    console.log("Login : ", loginData);
     let user :DBuserOutput|null = await getUserByEmail(pool, loginData.email);
+    console.log("user found : ", user);
     if (user) {
       const result = await bcrypt.compare(loginData.password, user.password);
       if (result) {
@@ -61,7 +63,7 @@ export async function login(pool, loginData : User): Promise<SessionResponse> {
     }
     return {error: 'There is no user with given email.'};
   } catch (err) {
-    logger.error("Error during the login", err);
+    logger.error("Critical error during the login", err);
     return {error: 'There was an error occurred. Please contact with server administrator or retry.'};
   }
 }

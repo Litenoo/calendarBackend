@@ -14,12 +14,16 @@ router.use(cors({
 }));
 
 
-router.post('/getTasksList', async (req, res) => {
+router.post('/tasksFetch', async (req, res) => {
   try {
-    // dev add some auth not sure if needed
-    const response = await pullTasksList(pool, req.cookies.userId.id, 10, 2024); //dev change month & year
+    const response = await pullTasksList(pool, {
+      userId : req.cookies.userId.id,
+      month : req.body.month,
+      year : req.body.year,
+    });
+
     res.status(200);
-    console.log(response);
+    console.log("tasksFetch:", response);
     res.json(response);
   } catch (err) {
     logger.error(`Error during fetching tasks list`, err);
@@ -31,8 +35,12 @@ router.post('/pushTask', async (req, res) => {
   try {
     const task = req.body.task;
     const userId = req.cookies.userId.id;
+    if(userId){
     await pushTask(pool, task, userId);
     console.log('Saving task for user : ', userId);
+    }else{
+      logger.info("Missing users ID in /pushTask request.");
+    }
   }catch (err){
     logger.error(`Error during pushTask`, err);
   }

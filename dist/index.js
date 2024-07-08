@@ -1,8 +1,6 @@
 import 'dotenv/config';
-configDotenv();
-import 'module-alias';
-const { PORT, SESSION_SECRET, DATABASE_PASSWORD, NODE_ENV } = process.env;
-if (!PORT || !SESSION_SECRET || !DATABASE_PASSWORD) {
+const { PORT, SESSION_SECRET, MYSQL_PASSWORD, NODE_ENV } = process.env;
+if (!PORT || !SESSION_SECRET || !MYSQL_PASSWORD) {
     throw new Error('Missing essential environment variables');
 }
 import express from "express";
@@ -12,7 +10,6 @@ import cors from "cors";
 import auth from "./routes/auth.js";
 import tasks from "./routes/tasks.js";
 import user from "./routes/user.js";
-import { configDotenv } from "dotenv";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

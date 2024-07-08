@@ -3,7 +3,7 @@ const pool = mariaDB.createPool({
     host: "127.0.0.1",
     port: 3306,
     user: 'root',
-    password: process.env.DATABASE_PASSWORD,
+    password: process.env.MYSQL_PASSWORD,
     database: 'calendarApp',
     connectionLimit: 10,
 });
